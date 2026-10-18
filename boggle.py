@@ -14,7 +14,7 @@ import math
 from py_boggle import trie_dictionary, my_game_manager
 from typing import List, Optional
 
-
+lol
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
