@@ -72,19 +72,74 @@ class MyGameManager(BoggleGame):
         If `word` is not present on the board, return None.
         """
         word = word.lower()
-        raise NotImplementedError("method find_word_in_board") # TODO: implement your code here
+
+        if not word:
+            return None
+
+        rows = len(self.board)
+        cols = len(self.board[0])
+
+        def dfs(row, col, index, visited, path):
+            if (row < 0 or row >= rows or
+                    col < 0 or col >= cols):
+                return None
+
+            if (row, col) in visited:
+                return None
+
+            if self.board[row][col] != word[index]:
+                return None
+
+            visited.add((row, col))
+            path.append((row, col))
+
+            if index == len(word) - 1:
+                return path.copy()
+
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+
+                    result = dfs(
+                        row + dr,
+                        col + dc,
+                        index + 1,
+                        visited,
+                        path
+                    )
+
+                    if result is not None:
+                        return result
+
+            visited.remove((row, col))
+            path.pop()
+
+            return None
+
+        for row in range(rows):
+            for col in range(cols):
+                result = dfs(
+                    row, col, 0, set(), []
+                )
+
+                if result is not None:
+                    return result
+
+        return None
+
 
     def add_word(self, word: str) -> int:
-        """This method is provided for you, but feel free to change it.
-        """
-        word = word.lower()
-        if (len(word) > SHORT and word not in self.words and self.dictionary.contains(word)):
-            location = self.find_word_in_board(word)
-            if location is not None:
-                self.last_added_word = location
-                self.words.append(word)
-                return len(word) - SHORT
-        return 0
+            """This method is provided for you, but feel free to change it.
+            """
+            word = word.lower()
+            if (len(word) > SHORT and word not in self.words and self.dictionary.contains(word)):
+                location = self.find_word_in_board(word)
+                if location is not None:
+                    self.last_added_word = location
+                    self.words.append(word)
+                    return len(word) - SHORT
+            return 0
 
     def get_last_added_word(self) -> Optional[List[Tuple[int, int]]]:
         """This method is provided for you, but feel free to change it.
@@ -110,16 +165,62 @@ class MyGameManager(BoggleGame):
         Returns:
             A set containing all words found on the board.
         """
-        raise NotImplementedError("method dictionary_driven_search") # TODO: implement your code here
+        found_words = set()
+
+        for word in self.dictionary:
+            if len(word) <= SHORT:
+                continue
+
+            if word in self.words:
+                continue
+
+            if self.find_word_in_board(word) is not None:
+                found_words.add(word)
+
+        return found_words
 
     def board_driven_search(self) -> Set[str]:
-        """Find all words using a board-driven search.
+        found_words = set()
 
-        The board-driven search constructs a string using every path on
-        the board and checks whether each string is a valid word in the
-        dictionary.
+        rows = len(self.board)
+        cols = len(self.board[0])
 
-        Returns:
-            A set containing all words found on the board.
-        """
-        raise NotImplementedError("method board_driven_search") # TODO: implement your code here
+        def dfs(row, col, prefix, visited):
+            if (row < 0 or row >= rows or
+                    col < 0 or col >= cols):
+                return
+
+            if (row, col) in visited:
+                return
+
+            new_word = prefix + self.board[row][col]
+
+            if not self.dictionary.is_prefix(new_word):
+                return
+
+            visited.add((row, col))
+
+            if (len(new_word) > SHORT and
+                    self.dictionary.contains(new_word) and
+                    new_word not in self.words):
+                found_words.add(new_word)
+
+            for dr in [-1, 0, 1]:
+                for dc in [-1, 0, 1]:
+                    if dr == 0 and dc == 0:
+                        continue
+
+                    dfs(
+                        row + dr,
+                        col + dc,
+                        new_word,
+                        visited
+                    )
+
+            visited.remove((row, col))
+
+        for row in range(rows):
+            for col in range(cols):
+                dfs(row, col, "", set())
+
+        return found_words
